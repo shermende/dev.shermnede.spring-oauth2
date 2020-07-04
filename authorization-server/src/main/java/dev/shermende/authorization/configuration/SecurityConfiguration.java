@@ -19,8 +19,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private static final String ADMIN = "admin";
     private static final String ROLE_ADMIN = "ADMIN";
 
-    private final PasswordEncoder passwordEncoder;
-
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
@@ -34,22 +32,19 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.inMemoryAuthentication()
-            .withUser(User.withUsername(USER).password(passwordEncoder.encode(USER)).roles(ROLE_USER))
-            .withUser(User.withUsername(ADMIN).password(passwordEncoder.encode(ADMIN)).roles(ROLE_ADMIN));
+            .withUser(User.withUsername(USER).password(passwordEncoder().encode(USER)).roles(ROLE_USER))
+            .withUser(User.withUsername(ADMIN).password(passwordEncoder().encode(ADMIN)).roles(ROLE_ADMIN));
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
     @Override
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
-    }
-
-    @Configuration
-    public static class SecurityNestedConfiguration {
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-            return new BCryptPasswordEncoder();
-        }
     }
 
 }

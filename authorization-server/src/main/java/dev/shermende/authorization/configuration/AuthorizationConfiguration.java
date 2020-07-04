@@ -1,6 +1,7 @@
 package dev.shermende.authorization.configuration;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,13 +15,13 @@ import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 
 import javax.sql.DataSource;
 
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 @EnableAuthorizationServer
 public class AuthorizationConfiguration extends AuthorizationServerConfigurerAdapter {
 
     private final DataSource dataSource;
-    private final TokenStore tokenStore;
     private final AuthenticationManager authenticationManager;
 
     @Override
@@ -30,23 +31,17 @@ public class AuthorizationConfiguration extends AuthorizationServerConfigurerAda
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
-        endpoints.tokenStore(tokenStore).authenticationManager(authenticationManager);
+        endpoints.tokenStore(tokenStore()).authenticationManager(authenticationManager);
     }
 
     @Override
     public void configure(AuthorizationServerSecurityConfigurer security) {
-        security.tokenKeyAccess("permitAll()").checkTokenAccess("permitAll()");
+        security.tokenKeyAccess("permitAll()").checkTokenAccess("isAuthenticated()");
     }
 
-    @Configuration
-    @RequiredArgsConstructor
-    public static class AuthorizationNestedConfiguration {
-        private final DataSource dataSource;
-
-        @Bean
-        public TokenStore tokenStore() {
-            return new JdbcTokenStore(dataSource);
-        }
+    @Bean
+    public TokenStore tokenStore() {
+        return new JdbcTokenStore(dataSource);
     }
 
 }

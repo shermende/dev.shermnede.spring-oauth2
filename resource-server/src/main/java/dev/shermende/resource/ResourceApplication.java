@@ -2,6 +2,7 @@ package dev.shermende.resource;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ public class ResourceApplication {
     }
 
     @GetMapping("/user")
+    @PreAuthorize(value = "hasAnyAuthority('ROLE_USER')")
     public String allow(
         @AuthenticationPrincipal Authentication authentication
     ) {
@@ -23,6 +25,7 @@ public class ResourceApplication {
     }
 
     @GetMapping("/admin")
+    @PreAuthorize(value = "hasAnyAuthority('ROLE_ADMIN')")
     public String deny(
         @AuthenticationPrincipal Authentication authentication
     ) {

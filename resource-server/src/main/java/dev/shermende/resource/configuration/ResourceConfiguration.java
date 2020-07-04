@@ -1,11 +1,11 @@
 package dev.shermende.resource.configuration;
 
-import lombok.Data;
+import dev.shermende.resource.configuration.properties.OAuthClientProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
@@ -16,40 +16,33 @@ import org.springframework.security.oauth2.provider.token.ResourceServerTokenSer
 @Configuration
 @EnableResourceServer
 @RequiredArgsConstructor
-@EnableConfigurationProperties({
-    ResourceConfiguration.ClientProperties.class,
-})
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class ResourceConfiguration extends ResourceServerConfigurerAdapter {
-
-    private final ClientProperties clientProperties;
 
     @Override
     public void configure(HttpSecurity http) throws Exception {
         http
-            .authorizeRequests()
-            .antMatchers("/user").hasAuthority("ROLE_USER")
-            .antMatchers("/admin").hasAuthority("ROLE_ADMIN")
-            .anyRequest().authenticated()
+            .authorizeRequests().anyRequest().authenticated()
             .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.NEVER)
             .and().anonymous().disable().httpBasic().disable().csrf().disable()
         ;
     }
 
     @Bean
-    public ResourceServerTokenServices tokenService() {
-        final RemoteTokenServices tokenServices = new RemoteTokenServices();
-        tokenServices.setClientId(clientProperties.getClient());
-        tokenServices.setClientSecret(clientProperties.getSecret());
-        tokenServices.setCheckTokenEndpointUrl(clientProperties.getUrl());
-        return tokenServices;
+    @ConfigurationProperties("oauth.client")
+    public OAuthClientProperties oAuthClientProperties() {
+        return new OAuthClientProperties();
     }
 
-    @Data
-    @ConfigurationProperties("oauth2.client")
-    public static class ClientProperties {
-        private String client = "client";
-        private String secret = "secret";
-        private String url = "http://localhost:8081/oauth/check_token";
+    @Bean
+    public ResourceServerTokenServices tokenService(
+        OAuthClientProperties properties
+    ) {
+        final RemoteTokenServices tokenServices = new RemoteTokenServices();
+        tokenServices.setClientId(properties.getClient());
+        tokenServices.setClientSecret(properties.getSecret());
+        tokenServices.setCheckTokenEndpointUrl(properties.getUrl());
+        return tokenServices;
     }
 
 }
